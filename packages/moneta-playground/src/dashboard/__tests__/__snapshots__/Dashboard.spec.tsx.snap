@@ -1,0 +1,47 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders a list of apps 1`] = `
+<table
+  data-testid="apps"
+>
+  <thead>
+    <tr>
+      <th>
+        <p>
+          Toggle
+        </p>
+      </th>
+      <th />
+      <th />
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        app 1
+      </td>
+    </tr>
+    <tr>
+      <td>
+        app 2
+      </td>
+    </tr>
+  </tbody>
+</table>
+`;
+
+exports[`renders an error when query fails 1`] = `
+<h2
+  data-testid="error"
+>
+  Oops, something went wrong!
+</h2>
+`;
+
+exports[`starts by rendering a loading state 1`] = `
+<div>
+  <p>
+    Loading...
+  </p>
+</div>
+`;
