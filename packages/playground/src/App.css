@@ -16,7 +16,7 @@
 }
 
 .viewClass {
-  padding: 40px;
+  padding: 10px;
   paddingTop: 0;
 }
 
@@ -31,13 +31,9 @@
 
 .stuckElem {
 top: 0;
-boxSizing: 'content-box';
-paddingBottom: 15;
-}
-
-.stuckElem div {
-  position: sticky;
-  top: 0;
+  position: sticky !important;
+  overflow: auto hidden !important;
+  border: 1px solid red !important;
 }
 
 .innerElem {

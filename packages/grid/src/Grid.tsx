@@ -267,6 +267,7 @@ export interface GridProps
   outerElementType?: ReactElementType;
   innerElementType?: ReactElementType;
   outerRef?: RefObject<HTMLDivElement>;
+  onScrollToOrScrollBy?: (props: ScrollCoords) => void;
 }
 
 export interface CellRangeArea extends CellInterface {
@@ -548,6 +549,7 @@ const Grid: React.FC<GridProps & RefAttribute> = memo(
       isDraggingSelection = false,
       outerElementType,
       innerElementType,
+      onScrollToOrScrollBy,
       ...rest
     } = props;
     const fallbackOuterRef = useRef<HTMLDivElement>();
@@ -1094,15 +1096,7 @@ const Grid: React.FC<GridProps & RefAttribute> = memo(
         ) {
           return null;
         }
-        console.log({
-          rowHeight,
-          columnWidth,
-          rowCount,
-          columnCount,
-          instanceProps: instanceProps.current,
-          offset: rowOffset,
-          scale,
-        });
+
         const rowIndex = getRowStartIndexForOffset({
           rowHeight,
           columnWidth,
@@ -1282,8 +1276,14 @@ const Grid: React.FC<GridProps & RefAttribute> = memo(
         // handleScroll
         outerRef.current!.scrollLeft = newScrollLeft;
         outerRef.current!.scrollTop = newScrollTop;
+
+        onScrollToOrScrollBy &&
+          onScrollToOrScrollBy({
+            scrollLeft: newScrollLeft,
+            scrollTop: newScrollTop,
+          });
       },
-      []
+      [onScrollToOrScrollBy]
     );
 
     /* Scroll grid to top */
@@ -1299,21 +1299,30 @@ const Grid: React.FC<GridProps & RefAttribute> = memo(
     /**
      * Scrollby utility
      */
-    const scrollBy = useCallback(({ x, y }: PosXY) => {
-      if (!outerRef.current) return;
+    const scrollBy = useCallback(
+      ({ x, y }: PosXY) => {
+        if (!outerRef.current) return;
 
-      const newScrollLeft =
-        x == void 0
-          ? outerRef.current!.scrollLeft
-          : outerRef.current!.scrollLeft + x;
-      const newScrollTop =
-        y == void 0
-          ? outerRef.current!.scrollTop
-          : outerRef.current!.scrollTop + y;
+        const newScrollLeft =
+          x == void 0
+            ? outerRef.current!.scrollLeft
+            : outerRef.current!.scrollLeft + x;
+        const newScrollTop =
+          y == void 0
+            ? outerRef.current!.scrollTop
+            : outerRef.current!.scrollTop + y;
 
-      outerRef.current!.scrollLeft = newScrollLeft;
-      outerRef.current!.scrollTop = newScrollTop;
-    }, []);
+        outerRef.current!.scrollLeft = newScrollLeft;
+        outerRef.current!.scrollTop = newScrollTop;
+
+        onScrollToOrScrollBy &&
+          onScrollToOrScrollBy({
+            scrollLeft: newScrollLeft,
+            scrollTop: newScrollTop,
+          });
+      },
+      [onScrollToOrScrollBy]
+    );
 
     /**
      * Scrolls to cell
