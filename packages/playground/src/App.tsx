@@ -48,7 +48,6 @@ const GridContainer = React.memo(() => {
     const handleScroll = () =>
       grid!.scrollTo({
         scrollTop: stuckElem.current?.offsetTop ?? 0,
-        scrollLeft,
       });
 
     viewport.addEventListener("scroll", handleScroll);
@@ -88,6 +87,7 @@ export default React.memo(function App() {
   const [viewportRef, setViewport] = React.useState<HTMLDivElement | null>(
     null
   );
+
   return (
     <div className="App">
       <Scrollbars

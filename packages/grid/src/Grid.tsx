@@ -295,17 +295,18 @@ export interface SelectionProps
   borderCoverWidth?: number;
 }
 
-export type ScrollCoords = {
+export type ScrollCoordsLeft = { scrollLeft: number };
+export type ScrollCoordsTop = {
   scrollTop: number;
-  scrollLeft: number;
 };
+export type ScrollCoords = ScrollCoordsTop | ScrollCoordsLeft;
 
 export type OptionalScrollCoords = {
   scrollTop?: number;
   scrollLeft?: number;
 };
 
-export interface ScrollState extends ScrollCoords {
+export interface ScrollState extends ScrollCoordsTop, ScrollCoordsLeft {
   isScrolling: boolean;
   verticalScrollDirection: Direction;
   horizontalScrollDirection: Direction;
@@ -1274,8 +1275,13 @@ const Grid: React.FC<GridProps & RefAttribute> = memo(
 
         // altering the scroll position manually will trigger onScroll event which in turn triggers
         // handleScroll
-        outerRef.current!.scrollLeft = newScrollLeft;
-        outerRef.current!.scrollTop = newScrollTop;
+        if (scrollTop != void 0) {
+          outerRef.current!.scrollTop = newScrollTop;
+        }
+
+        if (scrollLeft != void 0) {
+          outerRef.current!.scrollLeft = newScrollLeft;
+        }
 
         onScrollToOrScrollBy &&
           onScrollToOrScrollBy({
