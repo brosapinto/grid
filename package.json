@@ -7,6 +7,7 @@
   },
   "scripts": {
     "storybook": "lerna run storybook --stream",
+    "playground": "lerna run start",
     "docs:start": "cd packages/website; yarn docs:start",
     "docs:build": "cd packages/website; yarn docs:build;",
     "docs:deploy": "cd packages/website; yarn docs:build; vercel --prod",
@@ -37,7 +38,7 @@
     "@types/jest": "^26.0.0",
     "@types/react": "^16.9.35",
     "@types/react-dom": "^16.9.8",
-    "babel-loader": "^8.1.0",
+    "babel-loader": "8.1.0",
     "canvas": "^2.6.1",
     "husky": "^4.2.5",
     "jest": "^26.0.1",
@@ -54,6 +55,7 @@
   },
   "dependencies": {
     "@babel/plugin-transform-runtime": "^7.10.5",
-    "@babel/runtime": "^7.10.5"
+    "@babel/runtime": "^7.10.5",
+    "@rowsncolumns/grid": "8.0.8"
   }
 }

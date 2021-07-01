@@ -12,6 +12,8 @@ import React, {
   FunctionComponent,
   ComponentClass,
   Ref,
+  createRef,
+  RefObject,
 } from "react";
 import { Stage, Layer, Group, Line } from "react-konva/lib/ReactKonvaCore";
 import {
@@ -263,7 +265,8 @@ export interface GridProps
   isDraggingSelection?: boolean;
 
   outerElementType?: ReactElementType;
-  outerRef?: Ref<any>;
+  innerElementType?: ReactElementType;
+  outerRef?: RefObject<HTMLDivElement>;
 }
 
 export interface CellRangeArea extends CellInterface {
@@ -543,8 +546,12 @@ const Grid: React.FC<GridProps & RefAttribute> = memo(
       scale = 1,
       enableSelectionDrag = false,
       isDraggingSelection = false,
+      outerElementType,
+      innerElementType,
       ...rest
     } = props;
+    const fallbackOuterRef = useRef<HTMLDivElement>();
+    const outerRef = props.outerRef || fallbackOuterRef;
 
     invariant(
       !(children && typeof children !== "function"),
@@ -591,8 +598,6 @@ const Grid: React.FC<GridProps & RefAttribute> = memo(
     });
     const stageRef = useRef<Konva.Stage>(null);
     const containerRef = useRef<HTMLDivElement>(null);
-    const verticalScrollRef = useRef<HTMLDivElement>(null);
-    const horizontalScrollRef = useRef<HTMLDivElement>(null);
     const [_, forceRender] = useReducer((s) => s + 1, 0);
     const [scrollState, setScrollState] = useState<ScrollState>({
       scrollTop: 0,
@@ -951,79 +956,78 @@ const Grid: React.FC<GridProps & RefAttribute> = memo(
     /**
      * Snaps vertical scrollbar to the next/prev visible row
      */
-    const snapToRowFn = useCallback(({ deltaY }: SnapRowProps) => {
-      if (!verticalScrollRef.current || !scrollSnapRefs.current) return;
-      if (deltaY !== 0) {
-        const direction = deltaY < 0 ? Direction.Up : Direction.Down;
-        const {
-          visibleRowStartIndex,
-          rowCount,
-          isHiddenRow,
-        } = scrollSnapRefs.current;
-        let nextRowIndex =
-          direction === Direction.Up
-            ? // User is scrolling up
-              Math.max(0, visibleRowStartIndex - 1)
-            : Math.min(visibleRowStartIndex, rowCount - 1);
-        /* Ignore hidden row */
-        nextRowIndex = clampIndex(nextRowIndex, isHiddenRow, direction);
-        const rowHeight = getRowHeight(nextRowIndex);
-        verticalScrollRef.current.scrollTop +=
-          (direction === Direction.Up ? -1 : 1) * rowHeight;
-      }
-    }, []);
+    // const snapToRowFn = useCallback(({ deltaY }: SnapRowProps) => {
+    //   if (!verticalScrollRef.current || !scrollSnapRefs.current) return;
+    //   if (deltaY !== 0) {
+    //     const direction = deltaY < 0 ? Direction.Up : Direction.Down;
+    //     const {
+    //       visibleRowStartIndex,
+    //       rowCount,
+    //       isHiddenRow,
+    //     } = scrollSnapRefs.current;
+    //     let nextRowIndex =
+    //       direction === Direction.Up
+    //         ? // User is scrolling up
+    //           Math.max(0, visibleRowStartIndex - 1)
+    //         : Math.min(visibleRowStartIndex, rowCount - 1);
+    //     /* Ignore hidden row */
+    //     nextRowIndex = clampIndex(nextRowIndex, isHiddenRow, direction);
+    //     const rowHeight = getRowHeight(nextRowIndex);
+    //     verticalScrollRef.current.scrollTop +=
+    //       (direction === Direction.Up ? -1 : 1) * rowHeight;
+    //   }
+    // }, []);
 
     /**
      * Snaps horizontal scrollbar to the next/prev visible column
      */
-    const snapToColumnFn = useCallback(({ deltaX }: SnapColumnProps) => {
-      if (!horizontalScrollRef.current || !scrollSnapRefs.current) return;
-      if (deltaX !== 0) {
-        const {
-          visibleColumnStartIndex,
-          columnCount,
-          isHiddenColumn,
-        } = scrollSnapRefs.current;
-        const direction = deltaX < 0 ? Direction.Left : Direction.Right;
-        let nextColumnIndex =
-          direction === Direction.Left
-            ? Math.max(0, visibleColumnStartIndex - 1)
-            : Math.min(visibleColumnStartIndex, columnCount - 1);
-        /* Ignore hidden column */
-        nextColumnIndex = clampIndex(
-          nextColumnIndex,
-          isHiddenColumn,
-          direction
-        );
-        const columnWidth = getColumnWidth(nextColumnIndex);
-        horizontalScrollRef.current.scrollLeft +=
-          (direction === Direction.Left ? -1 : 1) * columnWidth;
-      }
-    }, []);
+    // const snapToColumnFn = useCallback(({ deltaX }: SnapColumnProps) => {
+    //   if (!horizontalScrollRef.current || !scrollSnapRefs.current) return;
+    //   if (deltaX !== 0) {
+    //     const {
+    //       visibleColumnStartIndex,
+    //       columnCount,
+    //       isHiddenColumn,
+    //     } = scrollSnapRefs.current;
+    //     const direction = deltaX < 0 ? Direction.Left : Direction.Right;
+    //     let nextColumnIndex =
+    //       direction === Direction.Left
+    //         ? Math.max(0, visibleColumnStartIndex - 1)
+    //         : Math.min(visibleColumnStartIndex, columnCount - 1);
+    //     /* Ignore hidden column */
+    //     nextColumnIndex = clampIndex(
+    //       nextColumnIndex,
+    //       isHiddenColumn,
+    //       direction
+    //     );
+    //     const columnWidth = getColumnWidth(nextColumnIndex);
+    //     horizontalScrollRef.current.scrollLeft +=
+    //       (direction === Direction.Left ? -1 : 1) * columnWidth;
+    //   }
+    // }, []);
     const snapToRowThrottler = useRef<({ deltaY }: SnapRowProps) => void>();
-    const snapToColumnThrottler = useRef<
-      ({ deltaX }: SnapColumnProps) => void
-    >();
+    const snapToColumnThrottler =
+      useRef<({ deltaX }: SnapColumnProps) => void>();
 
     /**
      * Register snap throttlers
      */
-    useEffect(() => {
-      if (snap) {
-        snapToRowThrottler.current = throttle(
-          snapToRowFn,
-          scrollThrottleTimeout
-        );
-        snapToColumnThrottler.current = throttle(
-          snapToColumnFn,
-          scrollThrottleTimeout
-        );
-      }
-      return () => {
-        snapToRowThrottler.current = undefined;
-        snapToColumnThrottler.current = undefined;
-      };
-    }, [snap]);
+    // useEffect(() => {
+    //   if (snap) {
+    //     snapToRowThrottler.current = throttle(
+    //       snapToRowFn,
+    //       scrollThrottleTimeout
+    //     );
+    //     snapToColumnThrottler.current = throttle(
+    //       snapToColumnFn,
+    //       scrollThrottleTimeout
+    //     );
+    //   }
+    //   return () => {
+    //     snapToRowThrottler.current = undefined;
+    //     snapToColumnThrottler.current = undefined;
+    //   };
+    // }, [snap]);
 
     /* Find frozen column boundary */
     const isWithinFrozenColumnBoundary = useCallback(
@@ -1090,6 +1094,15 @@ const Grid: React.FC<GridProps & RefAttribute> = memo(
         ) {
           return null;
         }
+        console.log({
+          rowHeight,
+          columnWidth,
+          rowCount,
+          columnCount,
+          instanceProps: instanceProps.current,
+          offset: rowOffset,
+          scale,
+        });
         const rowIndex = getRowStartIndexForOffset({
           rowHeight,
           columnWidth,
@@ -1258,13 +1271,17 @@ const Grid: React.FC<GridProps & RefAttribute> = memo(
     /* Scroll based on left, top position */
     const scrollTo = useCallback(
       ({ scrollTop, scrollLeft }: OptionalScrollCoords) => {
-        setScrollState((prev) => {
-          return {
-            ...prev,
-            scrollLeft: scrollLeft == void 0 ? prev.scrollLeft : scrollLeft,
-            scrollTop: scrollTop == void 0 ? prev.scrollTop : scrollTop,
-          };
-        });
+        if (!outerRef.current) return;
+
+        let newScrollTop =
+          scrollTop == void 0 ? outerRef.current.scrollTop : scrollTop;
+        let newScrollLeft =
+          scrollLeft == void 0 ? outerRef.current.scrollLeft : scrollLeft;
+
+        // altering the scroll position manually will trigger onScroll event which in turn triggers
+        // handleScroll
+        outerRef.current!.scrollLeft = newScrollLeft;
+        outerRef.current!.scrollTop = newScrollTop;
       },
       []
     );
@@ -1283,13 +1300,19 @@ const Grid: React.FC<GridProps & RefAttribute> = memo(
      * Scrollby utility
      */
     const scrollBy = useCallback(({ x, y }: PosXY) => {
-      setScrollState((prev) => {
-        return {
-          ...prev,
-          scrollLeft: x == void 0 ? prev.scrollLeft : prev.scrollLeft + x,
-          scrollTop: y == void 0 ? prev.scrollTop : prev.scrollTop + y,
-        };
-      });
+      if (!outerRef.current) return;
+
+      const newScrollLeft =
+        x == void 0
+          ? outerRef.current!.scrollLeft
+          : outerRef.current!.scrollLeft + x;
+      const newScrollTop =
+        y == void 0
+          ? outerRef.current!.scrollTop
+          : outerRef.current!.scrollTop + y;
+
+      outerRef.current!.scrollLeft = newScrollLeft;
+      outerRef.current!.scrollTop = newScrollTop;
     }, []);
 
     /**
@@ -2496,7 +2519,8 @@ const Grid: React.FC<GridProps & RefAttribute> = memo(
       </div>
     );
 
-    const OuterElem = props.outerElementType ?? "div";
+    const OuterElem = outerElementType ?? "div";
+    const InnerElem = innerElementType ?? "div";
 
     return (
       <OuterElem
@@ -2510,18 +2534,18 @@ const Grid: React.FC<GridProps & RefAttribute> = memo(
         }}
         className="rowsncolumns-grid outer-elem"
         onScroll={handleScroll}
-        ref={props.outerRef}
+        ref={outerRef}
       >
-        <div
+        <InnerElem
           className="rowsncolumns-grid-container inner-elem"
           style={{
             height: estimatedTotalHeight,
             width: estimatedTotalWidth,
           }}
-          ref={containerRef}
           {...rest}
         >
-          <Stage
+          <div
+            ref={containerRef}
             tabIndex={0}
             style={{
               position: "sticky",
@@ -2530,16 +2554,19 @@ const Grid: React.FC<GridProps & RefAttribute> = memo(
               left: 0,
               top: 0,
             }}
-            width={containerWidth}
-            height={containerHeight}
-            ref={stageRef}
-            listening={listenToEvents}
-            {...stageProps}
           >
-            {wrapper(stageChildren)}
-          </Stage>
-          {selectionChildren}
-        </div>
+            <Stage
+              width={containerWidth}
+              height={containerHeight}
+              ref={stageRef}
+              listening={listenToEvents}
+              {...stageProps}
+            >
+              {wrapper(stageChildren)}
+            </Stage>
+            {selectionChildren}
+          </div>
+        </InnerElem>
       </OuterElem>
     );
   })
