@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState } from "react";
+import Scrollbars from "react-custom-scrollbars";
 
 const ViewportCtx = createContext<HTMLElement | null>(null);
 
@@ -12,13 +13,22 @@ const Viewport: React.FC = (props) => {
   const [ref, setRef] = useState<HTMLElement | null>(null);
 
   return (
-    <section ref={setRef}>
+    <Scrollbars
+      autoHide
+      onScroll={() => {}}
+      tagName="section"
+      style={{ height: "100vh" }}
+      renderView={(props) => <div {...props} />}
+      ref={(ref: (Scrollbars & { view: HTMLDivElement }) | null) =>
+        ref && setRef(ref.view)
+      }
+    >
       {ref && (
         <ViewportCtx.Provider value={ref}>
           {props.children}
         </ViewportCtx.Provider>
       )}
-    </section>
+    </Scrollbars>
   );
 };
 

@@ -73,9 +73,26 @@ function tableSize(state: CellsStoreState) {
   );
 }
 
+const OuterElem = React.forwardRef<HTMLDivElement, any>(function OuterElem(
+  props,
+  ref
+) {
+  const { style, ...otherProps } = props;
+
+  // completely disable react-window scroll, we're taking over
+  return (
+    <div
+      {...otherProps}
+      ref={ref}
+      style={{ ...style, position: "sticky", top: 0, overflow: "auto hidden" }}
+    />
+  );
+});
+
 const Table: React.FC<TableProps> = (props) => {
   const { wId, appId, viewId } = props;
   const gridRef = useRef<GridRef | null>(null);
+  const stuckElem = useRef<HTMLDivElement | null>(null);
   const { data, loading, error } = useView({ wId, appId, viewId });
 
   const [cells, dispatch] = useReducer(cellsStore, {});
@@ -86,11 +103,26 @@ const Table: React.FC<TableProps> = (props) => {
     return cell?.value;
   };
 
+  // Calculate Total and Visible dimensions for this Table
   const viewport = useViewport();
   const totalWidth = columnCount * DEFAULT_CELL_WIDTH + 1;
   const totalHeight = rowCount * DEFAULT_CELL_HEIGHT + 1;
   const [elemRef, { width, height }] = useElemSize<HTMLElement>();
   useLayoutEffect(() => elemRef(viewport), [elemRef, viewport]);
+
+  // Sync Viewport's vertical scroll with Grid position
+  useLayoutEffect(
+    function syncVerticalScrollWithGrid() {
+      function handleScroll() {
+        const scrollTop = stuckElem.current?.offsetTop ?? 0;
+        gridRef.current?.scrollTo({ scrollTop });
+      }
+
+      viewport.addEventListener("scroll", handleScroll);
+      return () => viewport.removeEventListener("scroll", handleScroll);
+    },
+    [viewport]
+  );
 
   useCellsChanged({ workspaceId: wId, viewId }, (data) => {
     dispatch({ type: data.type, payload: { cells: data.cells } });
@@ -122,9 +154,11 @@ const Table: React.FC<TableProps> = (props) => {
   return (
     <div>
       <h2>{data.view.name}</h2>
-      <div style={{ position: "relative" }}>
+      <div style={{ position: "relative", height: totalHeight }}>
         <Grid
           ref={gridRef}
+          outerElementType={OuterElem}
+          outerRef={stuckElem}
           activeCell={activeCell}
           selections={selections}
           rowCount={rowCount}
