@@ -22,7 +22,6 @@ const GridContainer = React.memo(({ name }: { name: string }) => {
   const totalHeight = 20 * rowCount;
   const gridRef = useRef<GridRef>(null);
   const stuckElem = useRef<HTMLDivElement | null>(null);
-  const [, forceRender] = useState(Date.now);
   const viewport = React.useContext(Viewport);
 
   // in css file we add marginLeft, marginRight of 10
@@ -86,7 +85,6 @@ const GridContainer = React.memo(({ name }: { name: string }) => {
           height={Math.min(totalHeight, viewport.clientHeight - SIDE_MARGINS)}
           rowCount={rowCount}
           columnCount={columnCount}
-          stickyTop={0}
           itemRenderer={(props) => {
             return <Cell {...props} value={props.rowIndex.toString()} />;
           }}
