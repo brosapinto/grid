@@ -30,12 +30,12 @@
 }
 
 .stuckElem {
-top: 0;
+top: 0px;
   position: sticky !important;
   overflow: auto hidden !important;
   border: 1px solid red !important;
 }
 
 .innerElem {
-  boxSizing: 'border-box',
+  boxSizing: 'border-box';
 }

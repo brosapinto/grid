@@ -1273,6 +1273,13 @@ const Grid: React.FC<GridProps & RefAttribute> = memo(
         let newScrollLeft =
           scrollLeft == void 0 ? outerRef.current.scrollLeft : scrollLeft;
 
+        if (
+          newScrollTop === outerRef.current.scrollTop &&
+          newScrollLeft === outerRef.current.scrollLeft
+        ) {
+          return;
+        }
+
         // altering the scroll position manually will trigger onScroll event which in turn triggers
         // handleScroll
         if (scrollTop != void 0) {
