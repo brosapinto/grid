@@ -2,11 +2,10 @@ import React, { useRef, useState } from "react";
 import "./App.css";
 import Grid, { Cell, useSelection, GridRef } from "@rowsncolumns/grid";
 import Scrollbars from "react-custom-scrollbars";
+import { Sticky } from "./sticky";
+import { Viewport, VISIBLE_WIDTH } from "./viewport";
+import { ColumnHeaders, LAST_ROW_HEIGHT } from "./column-headers";
 // import useInnerElemSize from "./use-inner-element-size";
-
-const Viewport = React.createContext<HTMLDivElement>(
-  document.createElement("div")
-);
 
 const OuterElem = React.memo(
   React.forwardRef<HTMLDivElement, {}>(function OuterElem(props, ref) {
@@ -27,6 +26,8 @@ const GridContainer = React.memo(({ name }: { name: string }) => {
   // in css file we add marginLeft, marginRight of 10
   const SIDE_MARGINS = 20;
 
+  const [, forceRerender] = useState(Date.now);
+
   const { selections, ...selectionProps } = useSelection({
     getValue(): React.ReactText | undefined {
       return "";
@@ -35,6 +36,11 @@ const GridContainer = React.memo(({ name }: { name: string }) => {
     rowCount,
     columnCount,
   });
+
+  React.useEffect(() => {
+    // force rerender for now - temp hack to ensure column headers show
+    forceRerender(Date.now());
+  }, []);
 
   React.useEffect(() => {
     const grid = gridRef.current;
@@ -53,24 +59,40 @@ const GridContainer = React.memo(({ name }: { name: string }) => {
     return () => viewport.removeEventListener("scroll", handleScroll);
   }, [totalHeight, viewport]);
 
+  const STICKY_HEIGHT = 48;
   const onScrollToOrScrollByHandler = React.useCallback(
     ({ scrollTop }) => {
       if (!containerRef.current) return;
 
       const offsetTop = containerRef.current.offsetTop - SIDE_MARGINS / 2; //10
 
-      viewport.scrollTop = offsetTop + scrollTop;
+      viewport.scrollTop = offsetTop + scrollTop - STICKY_HEIGHT;
     },
     [viewport]
   );
 
-  // observe changes in the inner dimensions of the Viewport
-  // const [elemRef, { width: innerWidth }] = useInnerElemSize<HTMLDivElement>();
-  //useLayoutEffect(() => elemRef(viewport), [elemRef, viewport]);
+  const showHeaders = gridRef.current !== null && stuckElem.current !== null;
 
   return (
-    <>
-      <h3>{name}</h3>
+    <div className="element">
+      <Sticky
+        className="stickyColHeader"
+        height={STICKY_HEIGHT}
+        marginBottom={LAST_ROW_HEIGHT}
+        topOffset={0}
+      >
+        <h3>{name}</h3>
+        {showHeaders && (
+          <ColumnHeaders
+            gridRef={gridRef}
+            outerElement={stuckElem.current!}
+            columnCount={columnCount}
+            rowCount={rowCount}
+            selections={selections}
+            activeCell={selectionProps.activeCell}
+          />
+        )}
+      </Sticky>
       <div
         ref={containerRef}
         className="gridContainer"
@@ -81,8 +103,11 @@ const GridContainer = React.memo(({ name }: { name: string }) => {
           outerElementType={OuterElem}
           outerRef={stuckElem}
           ref={gridRef}
-          width={600}
-          height={Math.min(totalHeight, viewport.clientHeight - SIDE_MARGINS)}
+          width={VISIBLE_WIDTH}
+          height={Math.min(
+            totalHeight,
+            viewport.clientHeight - SIDE_MARGINS - STICKY_HEIGHT
+          )}
           rowCount={rowCount}
           columnCount={columnCount}
           itemRenderer={(props) => {
@@ -92,7 +117,7 @@ const GridContainer = React.memo(({ name }: { name: string }) => {
           {...selectionProps}
         />
       </div>
-    </>
+    </div>
   );
 });
 

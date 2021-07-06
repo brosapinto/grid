@@ -29,8 +29,13 @@
   position: relative;
 }
 
+h3 {
+  height: 24px;
+  margin: 0;
+}
+
 .stuckElem {
-top: 0px;
+top: 48px;
   position: sticky !important;
   overflow: auto hidden !important;
   border: 1px solid red !important;
@@ -38,4 +43,14 @@ top: 0px;
 
 .innerElem {
   boxSizing: 'border-box';
+}
+
+.element {
+  /*display: inline-block;*/
+  text-align: left;
+}
+
+.stickyColHeader {
+  background-color: #8effa2;
+  z-index: 1;
 }
