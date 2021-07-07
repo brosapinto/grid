@@ -59,6 +59,7 @@ export const ColumnHeaders: React.FC<ColumnHeadersProps> = React.memo(
       headers.push(
         <div
           key={i}
+          draggable
           style={{
             position: "absolute",
             left,

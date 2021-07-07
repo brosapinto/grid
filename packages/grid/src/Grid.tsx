@@ -550,11 +550,10 @@ const Grid: React.FC<GridProps & RefAttribute> = memo(
       isDraggingSelection = false,
       outerElementType,
       innerElementType,
+      outerRef = useRef<HTMLDivElement>(),
       onScrollToOrScrollBy,
       ...rest
     } = props;
-    const fallbackOuterRef = useRef<HTMLDivElement>();
-    const outerRef = props.outerRef || fallbackOuterRef;
 
     invariant(
       !(children && typeof children !== "function"),
