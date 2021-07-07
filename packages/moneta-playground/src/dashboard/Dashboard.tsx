@@ -1,4 +1,5 @@
 import React from "react";
+import Scrollbars from "react-custom-scrollbars";
 
 import CreateApp from "./CreateApp";
 import AppList from "./AppList";
@@ -17,11 +18,13 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
   const [folder] = data.workspace.folders ?? [{ apps: [] }];
 
   return (
-    <div>
+    <>
       <h1>Dashboard</h1>
       <CreateApp wId={wId} />
-      <AppList apps={folder.apps} />
-    </div>
+      <Scrollbars style={{ height: "calc(100vh - 200px)" }}>
+        <AppList apps={folder.apps} />
+      </Scrollbars>
+    </>
   );
 };
 

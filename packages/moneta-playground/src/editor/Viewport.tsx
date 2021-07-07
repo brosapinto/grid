@@ -14,14 +14,10 @@ const Viewport: React.FC = (props) => {
 
   return (
     <Scrollbars
-      autoHide
-      onScroll={() => {}}
-      tagName="section"
-      style={{ height: "100vh" }}
-      renderView={(props) => <div {...props} />}
-      ref={(ref: (Scrollbars & { view: HTMLDivElement }) | null) =>
-        ref && setRef(ref.view)
-      }
+      className="editor-viewport"
+      renderView={(props) => <div {...props} className="editor-view" />}
+      // @ts-ignore
+      ref={(scrollbars) => scrollbars && setRef(scrollbars.view)}
     >
       {ref && (
         <ViewportCtx.Provider value={ref}>

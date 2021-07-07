@@ -39,9 +39,6 @@ const App: React.FC = () => {
     <ApolloProvider client={client}>
       <Router>
         <Suspense fallback={<p>Loading...</p>}>
-          <h1>
-            <Link to="/">Rows!</Link>
-          </h1>
           <Switch>
             <Route path="/" exact component={Login} />
             <PrivateRoute path="/dashboard" component={DefaultWorkspace} />
