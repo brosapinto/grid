@@ -5,6 +5,7 @@ import Scrollbars from "react-custom-scrollbars";
 import { Sticky } from "./sticky";
 import { Viewport, VISIBLE_WIDTH } from "./viewport";
 import { ColumnHeaders, LAST_ROW_HEIGHT } from "./column-headers";
+import { DndElementContext, ElementDndProvider } from "./element-dnd-provider";
 // import useInnerElemSize from "./use-inner-element-size";
 
 const OuterElem = React.memo(
@@ -14,119 +15,127 @@ const OuterElem = React.memo(
   })
 );
 
-const GridContainer = React.memo(({ name }: { name: string }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const rowCount = 200;
-  const columnCount = 30;
-  const totalHeight = 20 * rowCount;
-  const gridRef = useRef<GridRef>(null);
-  const stuckElem = useRef<HTMLDivElement | null>(null);
-  const viewport = React.useContext(Viewport);
+const GridContainer = React.memo(
+  ({ name, frozenColumns }: { name: string; frozenColumns: number }) => {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const rowCount = 200;
+    const columnCount = 30;
+    const totalHeight = 20 * rowCount;
+    const gridRef = useRef<GridRef>(null);
+    const stuckElem = useRef<HTMLDivElement | null>(null);
+    const viewport = React.useContext(Viewport);
+    const { isDragging, dndContainer } = React.useContext(DndElementContext);
 
-  // in css file we add marginLeft, marginRight of 10
-  const SIDE_MARGINS = 20;
+    // in css file we add marginLeft, marginRight of 10
+    const SIDE_MARGINS = 20;
 
-  const [, forceRerender] = useState(Date.now);
+    const [, forceRerender] = useState(Date.now);
 
-  const { selections, ...selectionProps } = useSelection({
-    getValue(): React.ReactText | undefined {
-      return "";
-    },
-    gridRef: gridRef,
-    rowCount,
-    columnCount,
-  });
+    const { selections, ...selectionProps } = useSelection({
+      getValue(): React.ReactText | undefined {
+        return "";
+      },
+      gridRef: gridRef,
+      rowCount,
+      columnCount,
+    });
 
-  React.useEffect(() => {
-    // force rerender for now - temp hack to ensure column headers show
-    forceRerender(Date.now());
-  }, []);
+    React.useEffect(() => {
+      // force rerender for now - temp hack to ensure column headers show
+      forceRerender(Date.now());
+    }, []);
 
-  React.useEffect(() => {
-    const grid = gridRef.current;
-    const stuckDiv = stuckElem.current;
-    const hasScroll = viewport.clientHeight < totalHeight;
+    React.useEffect(() => {
+      const grid = gridRef.current;
+      const stuckDiv = stuckElem.current;
+      const hasScroll = viewport.clientHeight < totalHeight;
 
-    if (!grid || !hasScroll || !stuckDiv) return;
+      if (!grid || !hasScroll || !stuckDiv) return;
 
-    const handleScroll = () =>
-      grid!.scrollTo({
-        scrollTop: stuckElem.current?.offsetTop ?? 0,
-      });
+      const handleScroll = () =>
+        grid!.scrollTo({
+          scrollTop: stuckElem.current?.offsetTop ?? 0,
+        });
 
-    viewport.addEventListener("scroll", handleScroll);
+      viewport.addEventListener("scroll", handleScroll);
 
-    return () => viewport.removeEventListener("scroll", handleScroll);
-  }, [totalHeight, viewport]);
+      return () => viewport.removeEventListener("scroll", handleScroll);
+    }, [totalHeight, viewport]);
 
-  const STICKY_HEIGHT = 48;
-  const onScrollToOrScrollByHandler = React.useCallback(
-    ({ scrollTop }) => {
-      if (!containerRef.current) return;
+    const STICKY_HEIGHT = 48;
+    const onScrollToOrScrollByHandler = React.useCallback(
+      ({ scrollTop }) => {
+        if (!containerRef.current) return;
 
-      const offsetTop = containerRef.current.offsetTop - SIDE_MARGINS / 2; //10
+        const offsetTop = containerRef.current.offsetTop - SIDE_MARGINS / 2; //10
 
-      viewport.scrollTop = offsetTop + scrollTop - STICKY_HEIGHT;
-    },
-    [viewport]
-  );
+        viewport.scrollTop = offsetTop + scrollTop - STICKY_HEIGHT;
+      },
+      [viewport]
+    );
 
-  const showHeaders = gridRef.current !== null && stuckElem.current !== null;
+    const showHeaders = gridRef.current !== null && stuckElem.current !== null;
 
-  return (
-    <div className="element">
-      <Sticky
-        className="stickyColHeader"
-        height={STICKY_HEIGHT}
-        marginBottom={LAST_ROW_HEIGHT}
-        topOffset={0}
-      >
-        <h3>{name}</h3>
-        {showHeaders && (
-          <ColumnHeaders
-            gridRef={gridRef}
-            outerElement={stuckElem.current!}
-            columnCount={columnCount}
-            rowCount={rowCount}
-            selections={selections}
-            activeCell={selectionProps.activeCell}
-          />
-        )}
-      </Sticky>
-      <div
-        ref={containerRef}
-        className="gridContainer"
-        style={{ height: totalHeight }}
-      >
-        <Grid
-          onScrollToOrScrollBy={onScrollToOrScrollByHandler}
-          outerElementType={OuterElem}
-          outerRef={stuckElem}
-          ref={gridRef}
-          width={VISIBLE_WIDTH}
-          height={Math.min(
-            totalHeight,
-            viewport.clientHeight - SIDE_MARGINS - STICKY_HEIGHT
+    return (
+      <>
+        <Sticky
+          className="stickyColHeader"
+          height={STICKY_HEIGHT}
+          marginBottom={LAST_ROW_HEIGHT}
+          topOffset={0}
+        >
+          <h3>{name}</h3>
+          {showHeaders && (
+            <ColumnHeaders
+              frozenColumns={frozenColumns}
+              gridRef={gridRef}
+              outerElement={stuckElem.current!}
+              columnCount={columnCount}
+              rowCount={rowCount}
+              selections={selections}
+              activeCell={selectionProps.activeCell}
+            />
           )}
-          rowCount={rowCount}
-          columnCount={columnCount}
-          itemRenderer={(props) => {
-            return <Cell {...props} value={props.rowIndex.toString()} />;
-          }}
-          selections={selections}
-          {...selectionProps}
-        />
-      </div>
-    </div>
-  );
-});
+        </Sticky>
+        <div
+          ref={containerRef}
+          className="gridContainer"
+          style={{ height: totalHeight }}
+        >
+          <Grid
+            onScrollToOrScrollBy={onScrollToOrScrollByHandler}
+            outerElementType={OuterElem}
+            outerRef={stuckElem}
+            ref={gridRef}
+            width={VISIBLE_WIDTH}
+            height={Math.min(
+              totalHeight,
+              viewport.clientHeight - SIDE_MARGINS - STICKY_HEIGHT
+            )}
+            rowCount={rowCount}
+            frozenColumns={frozenColumns}
+            columnCount={columnCount}
+            itemRenderer={(props) => {
+              return <Cell {...props} value={props.rowIndex.toString()} />;
+            }}
+            selections={selections}
+            {...selectionProps}
+          />
+        </div>
+      </>
+    );
+  }
+);
 
 export default React.memo(function App() {
   const [viewportRef, setViewport] = React.useState<HTMLDivElement | null>(
     null
   );
   const elements = React.useMemo(
-    () => [{ name: "Table 1" }, { name: "Table 2" }],
+    () => [
+      { name: "Table 1", frozenColumns: 3 },
+      { name: "Table 2", frozenColumns: 0 },
+    ],
     []
   );
 
@@ -147,8 +156,10 @@ export default React.memo(function App() {
         <div className="content padding">
           {viewportRef && (
             <Viewport.Provider value={viewportRef}>
-              {elements.map(({ name }) => (
-                <GridContainer key={name} name={name} />
+              {elements.map(({ name, frozenColumns }) => (
+                <ElementDndProvider key={name}>
+                  <GridContainer name={name} frozenColumns={frozenColumns} />
+                </ElementDndProvider>
               ))}
             </Viewport.Provider>
           )}
