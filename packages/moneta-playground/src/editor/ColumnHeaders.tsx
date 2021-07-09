@@ -75,6 +75,11 @@ export const ColumnHeaders: React.FC<ColumnHeadersProps> = memo((props) => {
     gridRef.current!.getViewPort()
   );
 
+  const { containerWidth, estimatedTotalWidth } =
+    gridRef.current?.getDimensions() ?? {
+      containerWidth: 0,
+      estimatedTotalWidth: 0,
+    };
   const { columnStartIndex, columnStopIndex } = viewPort;
 
   const isIntersecting = (index: number) =>
@@ -103,11 +108,21 @@ export const ColumnHeaders: React.FC<ColumnHeadersProps> = memo((props) => {
     );
   }
 
-  for (
-    let i = columnStartIndex, index = 0;
-    i <= columnStopIndex;
-    i++, index++
-  ) {
+  // HACK to always renders every column header
+  // check if rendered columns aren't enought to fullfill containerWidth
+  let colStop = columnStopIndex;
+  let renderedWidth = 0;
+  for (let i = columnStartIndex; i <= columnStopIndex; i++) {
+    renderedWidth += columnWidth(i);
+  }
+
+  if (renderedWidth < containerWidth) {
+    // DEFAULT CELL WITH + BORDER (120 + 1 = 121)
+    const estimatedColStop = Math.ceil(containerWidth / 121);
+    if (colStop < estimatedColStop) colStop = estimatedColStop;
+  }
+
+  for (let i = columnStartIndex, index = 0; i <= colStop; i++, index++) {
     const width = columnWidth(i);
     const left = gridRef.current?.getColumnOffset(i);
 
@@ -139,12 +154,6 @@ export const ColumnHeaders: React.FC<ColumnHeadersProps> = memo((props) => {
 
     return () => outerElement.removeEventListener("scroll", handler);
   }, [columnsHeaderRef, gridRef, outerElement, setViewPort]);
-
-  const { containerWidth, estimatedTotalWidth } =
-    gridRef.current?.getDimensions() ?? {
-      containerWidth: 0,
-      estimatedTotalWidth: 0,
-    };
 
   return (
     <div
