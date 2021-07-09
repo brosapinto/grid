@@ -1,5 +1,6 @@
 import React, {
   useCallback,
+  useContext,
   useLayoutEffect,
   useMemo,
   useReducer,
@@ -22,6 +23,7 @@ import useCellsChanged, { TYPE } from "./useCellsChanged";
 import useView from "./useView";
 import useElemSize from "./use-elem-size";
 import { ColumnHeaders } from "./ColumnHeaders";
+import { DndElementContext, ElementDndProvider } from "./ElementDnDProvider";
 
 interface TableProps {
   wId: string;
@@ -110,6 +112,7 @@ const Table: React.FC<TableProps> = (props) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const stuckElem = useRef<HTMLDivElement | null>(null);
   const { data, loading, error } = useView({ wId, appId, viewId });
+  const { stopDrag } = useContext(DndElementContext);
 
   const [cells, dispatch] = useReducer(cellsStore, {});
   const { rowCount, columnCount } = useMemo(() => tableSize(cells), [cells]);
@@ -179,11 +182,17 @@ const Table: React.FC<TableProps> = (props) => {
   if (loading || !data) return <p>Loading...</p>;
 
   return (
-    <div className="table-item">
-      <Sticky style={{ height: STICKY_HEIGHT }}>
-        <h2 style={{ margin: 0 }}>{data.view.name}</h2>
+    <div className="table-item" onDrop={stopDrag}>
+      <Sticky
+        className="stickyColHeader"
+        style={{ height: STICKY_HEIGHT }}
+        topOffset={0}
+        marginBottom={LAST_ROW_HEIGHT}
+      >
+        <h3 style={{ margin: 0 }}>{data.view.name}</h3>
         {gridRef.current !== null && (
           <ColumnHeaders
+            frozenColumns={3}
             gridRef={gridRef}
             outerElement={stuckElem.current!}
             columnWidth={(columnIndex) => DEFAULT_CELL_WIDTH}
@@ -210,6 +219,7 @@ const Table: React.FC<TableProps> = (props) => {
           estimatedRowHeight={totalHeight / rowCount}
           columnWidth={(columnIndex) => DEFAULT_CELL_WIDTH}
           estimatedColumnWidth={totalWidth / columnCount}
+          frozenColumns={3}
           itemRenderer={(props) => {
             const value = getValue(props);
             return <Cell {...props} value={value} />;
@@ -254,7 +264,9 @@ const Page: React.FC<PageProps> = ({ match }) => {
   return (
     <>
       {views.map((view) => (
-        <Table key={view.id} wId={wId} appId={appId} viewId={view.id} />
+        <ElementDndProvider key={view.id}>
+          <Table wId={wId} appId={appId} viewId={view.id} />
+        </ElementDndProvider>
       ))}
     </>
   );

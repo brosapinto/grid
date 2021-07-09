@@ -13,18 +13,28 @@ const Viewport: React.FC = (props) => {
   const [ref, setRef] = useState<HTMLElement | null>(null);
 
   return (
-    <Scrollbars
-      className="editor-viewport"
-      renderView={(props) => <div {...props} className="editor-view" />}
-      // @ts-ignore
-      ref={(scrollbars) => scrollbars && setRef(scrollbars.view)}
-    >
-      {ref && (
-        <ViewportCtx.Provider value={ref}>
-          {props.children}
-        </ViewportCtx.Provider>
-      )}
-    </Scrollbars>
+    <div className="App">
+      <Scrollbars
+        autoHide
+        onScroll={() => {}}
+        tagName="section"
+        className="scrollParent"
+        // unset inline height, let CSS rule take precedence
+        style={{ height: undefined }}
+        renderView={(props) => <div {...props} className="viewClass" />}
+        ref={(ref: (Scrollbars & { view: HTMLDivElement }) | null) =>
+          ref && setRef(ref.view)
+        }
+      >
+        <div className="content padding">
+          {ref && (
+            <ViewportCtx.Provider value={ref}>
+              {props.children}
+            </ViewportCtx.Provider>
+          )}
+        </div>
+      </Scrollbars>
+    </div>
   );
 };
 
