@@ -185,7 +185,7 @@ const Table: React.FC<TableProps> = (props) => {
     <div className="table-item" onDrop={stopDrag}>
       <Sticky
         className="stickyColHeader"
-        style={{ height: STICKY_HEIGHT }}
+        style={{ height: STICKY_HEIGHT, paddingTop: 20, marginBottom: -20 }}
         topOffset={0}
         marginBottom={LAST_ROW_HEIGHT}
       >
